@@ -4,7 +4,6 @@ Created on Thu Jun 29 12:53:37 2017
 
 @author: Vijayasai S
 """
-import numpy as np
 
 def pairwise_dist(a):
     output = []
@@ -30,7 +29,7 @@ out = pairwise_dist(a)
 
 max_array = []
 for i in range(len(out)):
-    max_array.append(np.max(out[i]))
+    max_array.append(max(out[i]))
 
 print ("Maximum pairwise distance: ", max(max_array))
     
