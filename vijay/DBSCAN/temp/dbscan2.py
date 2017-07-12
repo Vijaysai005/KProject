@@ -13,14 +13,20 @@ import csv, time, numpy as np, pandas as pd, matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 import load_data
 
-def loadData(filename, col1, col2):
+def loadData(filename, *args):
     # Loading data from csv files
     with open(filename, "r") as csv_file:
         data_file = csv.reader(csv_file)
-        df = pd.DataFrame(list(data_file), columns=[col1,col2])
-
-    nrow = len(df["latitude"])
-    ncol = len(df.columns)
+        try:
+            df = pd.DataFrame(list(data_file), columns=[*args])
+            print (df)
+        except AssertionError:
+            raise AssertionError("Arguments passed are wrong")    
+    try:
+        nrow = len(df[args[0]])
+        ncol = len(df.columns)
+    except AssertionError:
+        raise AssertionError("Something wrong happened!")
 
     data = load_data.load_files(filename,nrow, ncol)
     ret = data.data
@@ -161,8 +167,9 @@ def FindingCluster(main_dict,outlier_index):
 
 if __name__ == "__main__":
     filename = input("Enter the filename: ")
-    data = loadData(filename,"latitude", "longitude")
+    data = loadData(filename, "lat", "long")
     eps = float(input("Enter the value maximum distance for forming cluster: "))
     n_clusters, labels, unique_labels, colors, core_samples_mask = algorithm(data, eps, 2.0)
     cluster, outlier = ClusterPlot(data, n_clusters, labels, unique_labels, colors, core_samples_mask)
     main_dict = dataInDict(cluster,outlier,{})
+    print (main_dict["latitude"]['2'])

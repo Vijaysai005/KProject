@@ -10,6 +10,9 @@ Created on Wed Jul 06 13:15:05 2017
 from sklearn.cluster import DBSCAN
 
 import csv
+
+from os.path import dirname
+from os.path import join
 import numpy as np
 
 import pandas as pd
@@ -33,12 +36,20 @@ class CreateDict(dict):
     	return self.__dict__
 
 
-def loadData(data_file, *args, **kwargs):
+def loadData(filename, *args, **kwargs):
 
 	dict = {}
 	for key,value in kwargs.items():
 		dict[key]=value
-	df = pd.DataFrame(data_file, columns=[*args])
+
+	try:
+		with open(filename, "r") as csv_file:
+			data_file = list(csv.reader(csv_file))
+			df = pd.DataFrame(data_file, columns=[*args])
+			#print (data_file)
+	except FileNotFoundError:
+		raise FileNotFoundError("First argument should be a file!")
+
 	try:
 		nrow = len(df[args[0]])
 	except Exception:
@@ -51,12 +62,16 @@ def loadData(data_file, *args, **kwargs):
 
 	data = np.empty((nrow, ncol))
 	for i, j in enumerate(data_file):
-				data[i] = np.asarray(j[dict["start_column"]:], dtype=np.float)
+		data[i] = np.asarray(j[dict["start_column"]:], dtype=np.float)
 
 	if "unit_id" in args:
 		return [CreateDict(data=data).data,df]
 	else:
 		raise KeyError("unit_id is missing")
+
+
+listOfDict = [{'unit_id':1410656,'latitude':18.052, 'longitude':74.065},{'unit_id':1410657,'latitude':18.053, 'longitude':74.066},\
+	{'unit_id':1410658,'latitude':18.054, 'longitude':74.067}]
 
 def DictToList(listOfDict):
 	varName = []
@@ -79,8 +94,8 @@ def _DBSCAN(data, dataframe, eps, min_samples):
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
-
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    print (n_clusters_)
     unique_labels = set(labels)
 
     outlier = [] ; cluster = []
@@ -89,22 +104,22 @@ def _DBSCAN(data, dataframe, eps, min_samples):
         part_cluster = []
         class_member_mask = (labels == k)
         xy = data[class_member_mask & core_samples_mask]
-
+       
         if k != -1:
             part_cluster.append(xy)
         cluster.append(part_cluster)
         xy = data[class_member_mask & ~core_samples_mask]
-
+        print (xy)
         if k == -1:
             outlier.append(xy)
 
     main_dict = {} ; lat_dict = {} ; long_dict = {} 
-    lat_id = {} ; long_id = {} ; unit_id = {}
+    lat_id = {} ; long_id = {} ; id = {}
 
-    for i in range(len(cluster)):
+    for i in range(len(cluster)-1):
         lat_dict[str(i+1)] = []
         long_dict[str(i+1)] = []
-        unit_id[str(i+1)] = []
+        id[str(i+1)] = []
         for j in range(len(cluster[i])):
             m = 0
             for k in range(len(cluster[i][j])):
@@ -118,7 +133,7 @@ def _DBSCAN(data, dataframe, eps, min_samples):
                 for l in range(len(dataframe["unit_id"])):
                 	if float(cluster[i][j][k][0]) == float(dataframe["latitude"][l]) and \
                 		float(cluster[i][j][k][1]) == float(dataframe["longitude"][l]):
-                		unit_id[str(i+1)].append(dataframe["unit_id"][l])
+                		id[str(i+1)].append(dataframe["unit_id"][l])
 
     try:
     	lat_dict["outlier"] = [] ; long_dict["outlier"] = []
@@ -130,7 +145,7 @@ def _DBSCAN(data, dataframe, eps, min_samples):
 
     main_dict["latitude"] = lat_dict
     main_dict["longitude"] = long_dict
-    main_dict["unit_id"] = unit_id
+    main_dict["id"] = id
     
     return main_dict
 
@@ -149,16 +164,11 @@ def FindCluster(main_dict, _id):
                 dist_i.append(str(i+1))
     return dist_i[-1]
 
-
-# if __name__ == "__main__":
-# 	listOfDict = [{'unit_id':1410656,'latitude':18.052, 'longitude':74.065},{'unit_id':1410657,'latitude':18.053, 'longitude':74.066},\
-# 		{'unit_id':1410658,'latitude':18.054, 'longitude':74.067}]
-# 	listOflist = DictToList(listOfDict)
-# 	data = loadData(listOflist, "unit_id", "latitude", "longitude", start_column=1)
-# 	main_dict = _DBSCAN(data[0], data[1], 0.02, 2.0)
-# 	print (main_dict)
-# 	for id in range(len(main_dict["latitude"]["outlier"])):
-# 		cluster_number = FindCluster(main_dict, id)
+if __name__ == "__main__":
+    data = loadData("data.csv", "unit_id", "latitude", "longitude", start_column=1)
+    main_dict = _DBSCAN(data[0], data[1], 0.02, 2.0)
+    for id in range(len(main_dict["latitude"]["outlier"])):
+        cluster_number = FindCluster(main_dict, id)
 
 
 

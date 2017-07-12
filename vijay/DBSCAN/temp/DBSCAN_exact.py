@@ -10,6 +10,9 @@ Created on Wed Jul 06 13:15:05 2017
 from sklearn.cluster import DBSCAN
 
 import csv
+
+from os.path import dirname
+from os.path import join
 import numpy as np
 
 import pandas as pd
@@ -32,54 +35,37 @@ class CreateDict(dict):
     def __getstate__(self):
     	return self.__dict__
 
+def load_files(filename, nrow, ncol):
+    module_path = dirname(__file__)
+    with open(join(module_path, filename)) as csv_file:
+        data_file = csv.reader(csv_file)
 
-def loadData(data_file, *args, **kwargs):
+        n_samples = int(nrow)
+        n_features = int(ncol)
 
-	dict = {}
-	for key,value in kwargs.items():
-		dict[key]=value
-	df = pd.DataFrame(data_file, columns=[*args])
-	try:
-		nrow = len(df[args[0]])
-	except Exception:
-		raise Exception("Aleast one argument should be there!")
+        data = np.empty((n_samples, n_features))
 
-	try:
-		ncol = len(df.columns)- dict["start_column"]
-	except KeyError:
-		raise KeyError("Mention the column number to start (0,1,2,...n) as keyword argument (eg.,start_column=0)")
+        for i, j in enumerate(data_file):
+            data[i] = np.asarray(j[0:], dtype=np.float)
+    return CreateDict(data=data).data
 
-	data = np.empty((nrow, ncol))
-	for i, j in enumerate(data_file):
-				data[i] = np.asarray(j[dict["start_column"]:], dtype=np.float)
 
-	if "unit_id" in args:
-		return [CreateDict(data=data).data,df]
-	else:
-		raise KeyError("unit_id is missing")
+def loadData(filename, col1, col2):
+    # Loading data from csv files
+    with open(filename, "r") as csv_file:
+        data_file = csv.reader(csv_file)
+        df = pd.DataFrame(list(data_file), columns=[col1,col2])
+    nrow = len(df["latitude"])
+    ncol = len(df.columns)
+    return load_files(filename,nrow, ncol)
 
-def DictToList(listOfDict):
-	varName = []
-	for dict in listOfDict:
-		for key,value in dict.items():
-			if key not in varName:
-				varName.append(key)
-	df = pd.DataFrame(listOfDict)
-	if 'unit_id' in varName:
-		if 'latitude' in varName:
-			if 'longitude' in varName:
-				listOflist = [[df['unit_id'][i],df['latitude'][i],df['longitude'][i]] for i in range(len(df['unit_id']))]
-	else:
-		raise KeyError("Thera is no key like (\"unit_id\",\"latitude\",\"longitude\")")
-	return listOflist
 
-def _DBSCAN(data, dataframe, eps, min_samples):
-
+def _DBSCAN(data, eps, min_samples):
+ 
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
-
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     unique_labels = set(labels)
 
@@ -98,13 +84,10 @@ def _DBSCAN(data, dataframe, eps, min_samples):
         if k == -1:
             outlier.append(xy)
 
-    main_dict = {} ; lat_dict = {} ; long_dict = {} 
-    lat_id = {} ; long_id = {} ; unit_id = {}
-
-    for i in range(len(cluster)):
+    main_dict = {} ; lat_dict = {} ; long_dict = {}
+    for i in range(len(cluster)-1):
         lat_dict[str(i+1)] = []
         long_dict[str(i+1)] = []
-        unit_id[str(i+1)] = []
         for j in range(len(cluster[i])):
             m = 0
             for k in range(len(cluster[i][j])):
@@ -115,23 +98,17 @@ def _DBSCAN(data, dataframe, eps, min_samples):
                     lat_dict[str(i+1)].append(cluster[i][j][k][0])
                     long_dict[str(i+1)].append(cluster[i][j][k][1])
                 m += 1      
-                for l in range(len(dataframe["unit_id"])):
-                	if float(cluster[i][j][k][0]) == float(dataframe["latitude"][l]) and \
-                		float(cluster[i][j][k][1]) == float(dataframe["longitude"][l]):
-                		unit_id[str(i+1)].append(dataframe["unit_id"][l])
-
     try:
     	lat_dict["outlier"] = [] ; long_dict["outlier"] = []
     	for i in range(len(outlier[0])):
     		lat_dict["outlier"].append(outlier[0][i][0])
     		long_dict["outlier"].append(outlier[0][i][1])
     except Exception:
-    	print ("No outlier datas")
+    	pass
 
     main_dict["latitude"] = lat_dict
     main_dict["longitude"] = long_dict
-    main_dict["unit_id"] = unit_id
-    
+
     return main_dict
 
 def distance(cluster_lat, cluster_long, outlier_lat, outlier_long):
@@ -149,16 +126,11 @@ def FindCluster(main_dict, _id):
                 dist_i.append(str(i+1))
     return dist_i[-1]
 
-
-# if __name__ == "__main__":
-# 	listOfDict = [{'unit_id':1410656,'latitude':18.052, 'longitude':74.065},{'unit_id':1410657,'latitude':18.053, 'longitude':74.066},\
-# 		{'unit_id':1410658,'latitude':18.054, 'longitude':74.067}]
-# 	listOflist = DictToList(listOfDict)
-# 	data = loadData(listOflist, "unit_id", "latitude", "longitude", start_column=1)
-# 	main_dict = _DBSCAN(data[0], data[1], 0.02, 2.0)
-# 	print (main_dict)
-# 	for id in range(len(main_dict["latitude"]["outlier"])):
-# 		cluster_number = FindCluster(main_dict, id)
+if __name__ == "__main__":
+    data = loadData("POI_only_lat_long.csv", "latitude", "longitude")
+    main_dict = _DBSCAN(data, 0.02, 2.0)
+    for _id in range(len(main_dict["latitude"]["outlier"])):
+        cluster_number = FindCluster(main_dict, _id)
 
 
 
