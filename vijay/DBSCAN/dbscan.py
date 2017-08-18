@@ -11,22 +11,25 @@ Created on Wed Jul 06 13:15:05 2017
 import csv, time, numpy as np, pandas as pd, matplotlib.pyplot as plt
 
 from sklearn.cluster import DBSCAN
-from  . import load_data
+from . import load_data
 
-
-
-def loadData(filename,col1, col2):
+def loadData(filename, *args):
     # Loading data from csv files
     with open(filename, "r") as csv_file:
         data_file = csv.reader(csv_file)
-        df = pd.DataFrame(list(data_file), columns=[col1,col2])
-
-    nrow = len(df["latitude"])
-    ncol = len(df.columns)
+        try:
+            df = pd.DataFrame(list(data_file), columns=[*args])
+            print (df)
+        except AssertionError:
+            raise AssertionError("Arguments passed are wrong")    
+    try:
+        nrow = len(df[args[0]])
+        ncol = len(df.columns)
+    except AssertionError:
+        raise AssertionError("Something wrong happened!")
 
     data = load_data.load_files(filename,nrow, ncol)
     ret = data.data
-    print (ret)
     return ret
 
 
@@ -61,7 +64,7 @@ def ClusterPlot(data, n_clusters_, labels, unique_labels, colors, core_samples_m
             col = [0, 0, 0, 1]
         class_member_mask = (labels == k)
         xy = data[class_member_mask & core_samples_mask]
-        print (core_samples_mask)
+        # print (core_samples_mask)
         plt.plot(xy[:, 1], xy[:, 0], 'o', markerfacecolor=tuple(col),
                          markeredgecolor='k', markersize=14)
         if k != -1:
@@ -77,7 +80,10 @@ def ClusterPlot(data, n_clusters_, labels, unique_labels, colors, core_samples_m
     plt.xlabel("x-coordinate/Longitude")
     plt.ylabel("y-coordinate/Latitude")
     
+    plt.grid(True)
+   
     pl = input("Do you want to show the plot?(Y/n) ")
+    
     if pl == "Y" or pl == "y":
         plt.show()
     else:
@@ -86,45 +92,62 @@ def ClusterPlot(data, n_clusters_, labels, unique_labels, colors, core_samples_m
     return cluster, outlier
 
 def dataInDict(cluster, outlier, main_dict={}):
-    lat_dict = {} ; long_dict = {}
-    pn1 = input("Do you want to  print the cluster data?(Y/n) ")
-    if pn1 == "Y" or pn1 == "y":
-        print ("Cluster Data: ")
-        print ("cls","\t","latitude","\t","longitude")
-    else:
-        time.sleep(0.01)
+	lat_dict = {} ; long_dict = {}
+	pn1 = input("Do you want to  print the cluster data?(Y/n) ")
+	if pn1 == "Y" or pn1 == "y":
+		print ("Cluster Data: ")
+		print ("cls","\t","latitude","\t","longitude")
+	else:
+		time.sleep(0.01)
 
-    for i in range(len(cluster)-1):
-        lat_dict[str(i+1)] = []
-        long_dict[str(i+1)] = []
-        for j in range(len(cluster[i])):
-            m = 0
-            for k in range(len(cluster[i][j])):
-                if  m == 0:
-                    lat_dict[str(i+1)].append(cluster[i][j][k][0])
-                    long_dict[str(i+1)].append(cluster[i][j][k][1])
-                else:
-                    lat_dict[str(i+1)].append(cluster[i][j][k][0])
-                    long_dict[str(i+1)].append(cluster[i][j][k][1])
-                    
-                if pn1 == "Y" or pn1 == "y":
-                    if  m == 0:
-                        print (str(i+1) , "\t" , cluster[i][j][k][0], "\t", cluster[i][j][k][1])
-                    else:
-                        print (" " , "\t" , cluster[i][j][k][0], "\t", cluster[i][j][k][1])
-                else:
-                    time.sleep(0.01)
-                m += 1      
+	for i in range(len(cluster)-1):
+		lat_dict[str(i+1)] = []
+		long_dict[str(i+1)] = []
+		for j in range(len(cluster[i])):
+			m = 0
+			for k in range(len(cluster[i][j])):
+				if  m == 0:
+					lat_dict[str(i+1)].append(cluster[i][j][k][0])
+					long_dict[str(i+1)].append(cluster[i][j][k][1])
+				else:
+					lat_dict[str(i+1)].append(cluster[i][j][k][0])
+					long_dict[str(i+1)].append(cluster[i][j][k][1])
 
-    lat_dict["outlier"] = [] ; long_dict["outlier"] = []
-    for i in range(len(outlier[0])):
-        lat_dict["outlier"].append(outlier[0][i][0])
-        long_dict["outlier"].append(outlier[0][i][1])
+				if pn1 == "Y" or pn1 == "y":
+					if  m == 0:
+						print (str(i+1) , "\t" , cluster[i][j][k][0], "\t", cluster[i][j][k][1])
+					else:
+						print (" " , "\t" , cluster[i][j][k][0], "\t", cluster[i][j][k][1])
+				else:
+					time.sleep(0.01)
+				m += 1      
+	try:
+		lat_dict["outlier"] = [] ; long_dict["outlier"] = []
+		for i in range(len(outlier[0])):
+			lat_dict["outlier"].append(outlier[0][i][0])
+			long_dict["outlier"].append(outlier[0][i][1])
+	except Exception:
+		pass
 
-    main_dict["latitude"] = lat_dict
-    main_dict["longitude"] = long_dict 
+	main_dict["latitude"] = lat_dict
+	main_dict["longitude"] = long_dict
 
-    return main_dict
+	pn2 = input("Do you want to  print the outlier data?(Y/n) ")
+	if pn2 == "Y" or pn2 == "y":
+		print ("The ID's outside the cluster: ")
+		print ("ID's","\t","latitude","\t","longitude","\t", "Near by cluster")
+	else:
+		time.sleep(0.01)
+	for i in range(len(main_dict["latitude"]["outlier"])):
+		try:
+			cluster_number = FindingCluster(main_dict,i)
+			if pn2 == "Y" or pn2 == "y":
+				print (str(i+1),"\t",main_dict["latitude"]["outlier"][i],"\t",main_dict["longitude"]["outlier"][i],"\t",cluster_number) 
+			else:
+				time.sleep(0.01)
+		except Exception:
+			pass
+	return main_dict
 
 def distance(cluster_lat, cluster_long, outlier_lat, outlier_long):
     return np.linalg.norm(np.array((cluster_lat, cluster_long))-np.array((outlier_lat, outlier_long)))
@@ -143,22 +166,10 @@ def FindingCluster(main_dict,outlier_index):
 
 
 if __name__ == "__main__":
-    data = loadData("POI_only_lat_long.csv","latitude", "longitude")
+    filename = input("Enter the filename: ")
+    data = loadData(filename, "lat", "long")
     eps = float(input("Enter the value maximum distance for forming cluster: "))
     n_clusters, labels, unique_labels, colors, core_samples_mask = algorithm(data, eps, 2.0)
     cluster, outlier = ClusterPlot(data, n_clusters, labels, unique_labels, colors, core_samples_mask)
     main_dict = dataInDict(cluster,outlier,{})
-
-    pn2 = input("Do you want to  print the outlier data?(Y/n) ")
-    if pn2 == "Y" or pn2 == "y":
-        print ("The ID's outside the cluster: ")
-        print ("ID's","\t","latitude","\t","longitude","\t", "Near by cluster")
-    else:
-        time.sleep(0.01)
-    for i in range(len(main_dict["latitude"]["outlier"])):
-        cluster_number = FindingCluster(main_dict,i)
-        if pn2 == "Y" or pn2 == "y":
-            print (str(i+1),"\t",main_dict["latitude"]["outlier"][i],"\t",main_dict["longitude"]["outlier"][i],"\t",cluster_number) 
-        else:
-            time.sleep(0.01) 
-    
+    print (main_dict["latitude"]['2'])

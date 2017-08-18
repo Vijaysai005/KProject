@@ -42,7 +42,7 @@ def timeData(lat1,long1,no_of_bikers,max_grp_string, time):
 		long1 = long1 + 0.001
 	return time_dict
 
-from DBSCAN import load_data, dbscan
+from DBSCAN import dbscan
 #from DBSCAN import db_scan as ds
 
 lat1 = 18.052 ; long1 = 74.552

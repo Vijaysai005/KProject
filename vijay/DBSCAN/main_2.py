@@ -21,7 +21,7 @@ import matplotlib.image as mpimg
 
 def vplot(main_dict,n_cluster,tit, lat_cen=18,long_cen=74,size=800,zoom=10):
 	
-	#gmap = gmplot.GoogleMapPlotter(18, 74, 10)
+	gmap = gmplot.GoogleMapPlotter(18, 74, 10)
 	fig = plt.figure()
 	fig.suptitle(str(tit)+" No.of clusters: "+str(n_cluster))
 	ax=fig.add_subplot(111)
@@ -48,9 +48,9 @@ def vplot(main_dict,n_cluster,tit, lat_cen=18,long_cen=74,size=800,zoom=10):
 			lat_cl.append(main_dict[i][j][1])
 			long_cl.append(main_dict[i][j][2])
 		ax.plot(lat_cl, long_cl, 'o', markerfacecolor=colors[i],markeredgecolor='k', markersize=14)
-		#gmap.scatter(lat_cl, long_cl, '#3B0B39', size=200, marker=False)
-		#gmap.scatter(lat_cl, long_cl, 'r', marker=True)
-		#plt.hold(True)
+		gmap.scatter(lat_cl, long_cl, '#3B0B39', size=200, marker=False)
+		gmap.scatter(lat_cl, long_cl, 'r', marker=True)
+		plt.hold(True)
 	lat_ol = [] ; long_ol = []
 	for k in range(len(main_dict["outlier"])):
 		lat_ol.append(main_dict["outlier"][k][1])
@@ -59,15 +59,15 @@ def vplot(main_dict,n_cluster,tit, lat_cen=18,long_cen=74,size=800,zoom=10):
 	ax.plot(lat_ol, long_ol, 'o', markerfacecolor=tuple(col),
                          markeredgecolor='k', markersize=6)
 	
-	#gmap.scatter(lat_ol, long_ol, '#3B0B39', size=50, marker=False)
-	#gmap.scatter(lat_ol, long_ol, 'k', marker=True)
+	gmap.scatter(lat_ol, long_ol, '#3B0B39', size=50, marker=False)
+	gmap.scatter(lat_ol, long_ol, 'k', marker=True)
 	
 	d = "PLOTS3/"+str(tit)
 	#implot.title(str(tit)+" No.of clusters: "+str(n_cluster))
 	fig.savefig(d)
 	plt.close()
 
-	#gmap.draw("MAP/mymap_"+str(tit)+".html")
+	gmap.draw("MAP/mymap_"+str(tit)+".html")
 
 	return
 
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 						data = cl.loadData(listOflist, "unit_id", "latitude", "longitude", start_column=1)
 						main_dict,n_cluster = cl.cluster(data[0], data[1], 0.045, 2)
 
-						#print (n_cluster)
+						print (day, hr)
 						
 						if n_cluster == 0:
 							lat_cen = [] ; long_cen = []
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 							IST_min = mins - 30 
 
 						vplot(main_dict,n_cluster,str(day)+"-"+str(month)+"-"+str(year)+"_"+str(IST_hr)+":"+str(IST_min),lat_cen=cent_x,long_cen=cent_y,size=800, zoom=10)
-						print (cent_x,cent_y)
+						#print (cent_x,cent_y)
 					except KeyError:
 						pass
 
