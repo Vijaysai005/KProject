@@ -24,7 +24,7 @@ def manual_DBSCAN(df, coll, maximum_distance):
         Give the maximum distance between two points in a cluster.
 	"""
 	
-	coll.drop()
+	#coll.drop()
 
 	df["timestamp"] = pd.to_datetime(df["timestamp"])
 	sorted_df = df.sort_values(by=["timestamp"], ascending=True)
@@ -81,7 +81,7 @@ def manual_DBSCAN(df, coll, maximum_distance):
 	sorted_df = sorted_df.assign(clus_n=clus_n.values)	
 
 	ld = sorted_df.values.tolist()
-	
+
 	#print (sorted_df.shape[0])
 	for a in range(sorted_df.shape[0]):
 		coll.insert([{"distance_by_interval":ld[a][0], "unit_id":ld[a][5], "rank":ld[a][3],"timestamp":ld[a][4],\

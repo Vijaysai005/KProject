@@ -18,7 +18,7 @@ def Generate_alert(df, coll):
     	The dataframe for cluster creation.
 	"""
 
-	coll.drop()
+	#coll.drop()
 
 	df["timestamp"] = pd.to_datetime(df["timestamp"])
 	sorted_df = df.sort_values(by=["timestamp"], ascending=True)

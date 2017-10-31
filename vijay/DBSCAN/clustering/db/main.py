@@ -10,6 +10,7 @@ Created on Thu Jul 20 13:15:05 2017
 import my_dbscan as mydb
 import alert_update as au
 import generate_data as gd
+import generate_data_2 as gd_2
 
 from pymongo import MongoClient
 import pandas as pd
@@ -57,12 +58,12 @@ if __name__  == "__main__":
     set_coll1 = db.tapola_rank_15_curr
     set_coll2 = db.tapola_rank_15_total
 
-    time_delay = 15 # in minutes
+    time_delay = 1 # in minutes
 
     year = 2017 ; month = 3        # year = datetime.now().year		month = datetime.now().month
 			    
     startday = 25 ; endday = 26	   # startday = datetime.now().day  endday =    
-    starthr = 0 ; endhr = 23	   # starthr = datetime.now().hour
-    startmin = 0 ; endmin = 59
+    starthr = 1 ; endhr = 23	   # starthr = datetime.now().hour
+    startmin = 30 ; endmin = 59
     
-    gd.Generate_data(get_coll, set_coll1, set_coll2, time_delay, year, month, startday, endday, starthr, endhr, startmin, endmin)         
+    gd_2.Generate_data(get_coll, set_coll1, set_coll2, time_delay, year, month, startday, endday, starthr, endhr, startmin, endmin)         

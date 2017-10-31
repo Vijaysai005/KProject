@@ -62,12 +62,16 @@ def Generate_data(get_col, set_col1, set_col2, time_delay, year, month, startday
 	client = MongoClient('localhost', 27017)
 	db = client.maximus_db
 
-	for day in range(startday,endday+1): 
-		for hr in range(starthr,endhr+1):
-			for mins in range(startmin,endmin+1,time_delay):
+	while startday <= endday:
+		while starthr <= endhr:
+			while startmin <= endmin:
 				try:
 					#set_col1.drop()
 					#set_col2.drop()
+
+					day = startday
+					hr = starthr
+					mins = startmin
 					
 					mins_next = mins + time_delay
 					hr_next = hr
@@ -154,5 +158,12 @@ def Generate_data(get_col, set_col1, set_col2, time_delay, year, month, startday
 					count += 1			
 				except KeyError:
 					pass	
+				startmin = startmin + time_delay
+			starthr = starthr + 1
+			if startmin > 59:
+				startmin = 0
+		startday = startday + 1
+		if starthr > 23:
+			starthr = 0
 	return	
 	
